@@ -17,7 +17,6 @@ namespace AssistantRepartitionClassesCollege
         //double[] dureesClasses = { 5, 5, 5, 5, 0.5, 0.5, 0.5, 0.5, 0.5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 }; // Soit 84 heures
         //int[] niveauClasses = { 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4 };
 
-        string[] profs;
         double[] heuresProfs;
         string[] classes;
         double[] dureesClasses;
@@ -33,7 +32,7 @@ namespace AssistantRepartitionClassesCollege
         {
             this.modele = modele;
 
-            profs = modele.Profs.ConvertAll(p => p.Nom).ToArray();
+            //profs = modele.Profs.ConvertAll(p => p.Nom).ToArray();
             heuresProfs = modele.Profs.ConvertAll(p => p.Service- modele.Preaffectations
                 .Where(pr => pr.Prof == p.Nom)
                 .Sum(pr => modele.Classes.First(c => c.Nom == pr.Classe).Duree)).ToArray();
@@ -95,7 +94,7 @@ namespace AssistantRepartitionClassesCollege
             // Factoriser N2 avec NBPROFS
 
             // Affectation des classes sans découpe
-            int NBPROFS = profs.Length; // Ressortir toutes les opérations à ne faire qu'une seule fois
+            int NBPROFS = modele.Profs.Count; // Ressortir toutes les opérations à ne faire qu'une seule fois
             double[] heuresProfsRestantes = new double[NBPROFS];
             Array.Copy(heuresProfs, heuresProfsRestantes, NBPROFS);
             List<int> listeIndexProfChoisisPourClassesSansDecoupe = new List<int>();
@@ -108,7 +107,7 @@ namespace AssistantRepartitionClassesCollege
                 while (heuresProfsRestantes[indexProfChoisi] < dureeNecessaire
                     || modele.PreferencesNiveaux.Any(
                         pr => pr.Niveau == classesSansDecoupeEtNonPreaffectees[i].Niveau
-                        && pr.Prof == profs[indexProfChoisi]
+                        && pr.Prof == modele.Profs[indexProfChoisi].Nom
                         && pr.Mode == Preference.NePeutPasAvoir))
                     indexProfChoisi = (indexProfChoisi + 1) % NBPROFS;
 
@@ -119,7 +118,7 @@ namespace AssistantRepartitionClassesCollege
             // Affichage éventuel des profs des classes sans découpe
             if (scribe != null)
                 foreach (int index in listeIndexProfChoisisPourClassesSansDecoupe)
-                    scribe.WriteLine(classesSansDecoupeEtNonPreaffectees[index].Nom + " : " + profs[index]);
+                    scribe.WriteLine(classesSansDecoupeEtNonPreaffectees[index].Nom + " : " + modele.Profs[index].Nom);
 
             //// Affectation des trois troisièmes (3A pré-affectée à Gwen)
             //int NBPROFS = profs.Length;
@@ -257,7 +256,7 @@ namespace AssistantRepartitionClassesCollege
                     List<string> horaires = new List<string>();
                     foreach (KeyValuePair<int, double> couple in affectationsClasses[i])
                     {
-                        string horaire = profs[couple.Key];
+                        string horaire = modele.Profs[couple.Key].Nom;
                         horaire += ": ";
                         horaire += couple.Value.ToString("F1");
                         horaire += " h";
@@ -284,7 +283,7 @@ namespace AssistantRepartitionClassesCollege
                 int indexProfClasse = -1;
                 if (preaff != null)
                 {
-                    indexProfClasse = profs.ToList().FindIndex(p => p == preaff.Prof);
+                    indexProfClasse = modele.Profs.FindIndex(p => p.Nom == preaff.Prof);
                 }
                 else
                 {
@@ -322,7 +321,7 @@ namespace AssistantRepartitionClassesCollege
             IEnumerable<ModeleProjet.PreferenceNiveau> preferencesNonObligatoires = modele.PreferencesNiveaux.Where(pr => pr.Mode != Preference.NePeutPasAvoir);
             foreach (ModeleProjet.PreferenceNiveau pref in preferencesNonObligatoires)
             {
-                int indexProfConcerne = profs.ToList().FindIndex(p => p == pref.Prof);
+                int indexProfConcerne = modele.Profs.FindIndex(p => p.Nom == pref.Prof);
 
                 // Refactoriser les deux choix ci-dessous qui sont très proches, mais une fois qu'on aura tout fait marcher
                 if (pref.Mode == Preference.NePreferePasAvoir)
