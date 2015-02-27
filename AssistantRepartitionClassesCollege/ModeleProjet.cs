@@ -38,6 +38,11 @@ namespace AssistantRepartitionClassesCollege
             public double DureeSoutien { get; set; }
             [XmlAttribute]
             public bool AutoriserDecoupe { get; set; }
+
+            public override string ToString()
+            {
+                return string.Concat(Nom, " : ", Duree.ToString("F1"), "h", DureeSoutien > 0 ? ("+" + DureeSoutien.ToString("F1") + "h") : string.Empty);
+            }
         }
 
         public class Prof
@@ -48,6 +53,11 @@ namespace AssistantRepartitionClassesCollege
             public double Service { get; set; }
             [XmlAttribute]
             public double MaxHeuresSup { get; set; }
+
+            public override string ToString()
+            {
+                return string.Concat(Nom, " : ", Service.ToString("F1"), "h+", MaxHeuresSup.ToString("F1") + "h");
+            }
         }
 
         public class Preaffectation
@@ -56,6 +66,11 @@ namespace AssistantRepartitionClassesCollege
             public string Classe { get; set; }
             [XmlAttribute]
             public string Prof { get; set; }
+
+            public override string ToString()
+            {
+                return string.Concat(Classe, " => ", Prof);
+            }
         }
 
         public class PreferenceNiveau
@@ -66,6 +81,11 @@ namespace AssistantRepartitionClassesCollege
             public Preference Mode { get; set; }
             [XmlAttribute]
             public Niveau Niveau { get; set; }
+
+            public override string ToString()
+            {
+                return string.Concat(Prof, " ", Mode, " ", Niveau);
+            }
         }
 
         public class CriteresCalcul
