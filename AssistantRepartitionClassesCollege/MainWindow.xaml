@@ -1,0 +1,77 @@
+﻿<Window x:Class="AssistantRepartitionClassesCollege.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:self="clr-namespace:AssistantRepartitionClassesCollege"
+        Title="PORCAGEN" Height="550" Width="700" Closing="Window_Closing">
+    <Window.CommandBindings>
+        <CommandBinding Command="New" CanExecute="NewCommand_CanExecute" Executed="NewCommand_Executed" />
+        <CommandBinding Command="Open" CanExecute="OpenCommand_CanExecute" Executed="OpenCommand_Executed" />
+        <CommandBinding Command="Save" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
+        <CommandBinding Command="SaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
+        <CommandBinding Command="Close" CanExecute="CloseCommand_CanExecute" Executed="CloseCommand_Executed" />
+        <CommandBinding Command="self:CustomCommands.Exit" CanExecute="ExitCommand_CanExecute" Executed="ExitCommand_Executed" />
+        <CommandBinding Command="self:CustomCommands.Classes" CanExecute="ClassesCommand_CanExecute" Executed="ClassesCommand_Executed" />
+        <CommandBinding Command="self:CustomCommands.Profs" CanExecute="ProfsCommand_CanExecute" Executed="ProfsCommand_Executed" />
+        <CommandBinding Command="self:CustomCommands.Preaffectations" CanExecute="PreaffectationsCommand_CanExecute" Executed="PreaffectationsCommand_Executed" />
+        <CommandBinding Command="self:CustomCommands.PreferencesNiveaux" CanExecute="PreferencesNiveauxCommand_CanExecute" Executed="PreferencesNiveauxCommand_Executed" />
+        <CommandBinding Command="self:CustomCommands.Criteres" CanExecute="CriteresCommand_CanExecute" Executed="CriteresCommand_Executed" />
+        <CommandBinding Command="self:CustomCommands.Simuler" CanExecute="SimulerCommand_CanExecute" Executed="SimulerCommand_Executed" />
+    </Window.CommandBindings>
+    <Grid>
+        <DockPanel>
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="_Fichier">
+                    <MenuItem Command="New" Header="_Nouveau projet..."/>
+                    <MenuItem Command="Open" Header="_Ouvrir projet..."/>
+                    <Separator/>
+                    <MenuItem Command="Save" Header="_Enregistrer"/>
+                    <MenuItem Command="SaveAs" Header="Enregistrer _sous..."/>
+                    <MenuItem Command="Close" Header="_Fermer"/>
+                    <Separator/>
+                    <MenuItem Header="_Options"/>
+                    <Separator/>
+                    <MenuItem Command="self:CustomCommands.Exit" Header="_Quitter"/>
+                </MenuItem>
+                <MenuItem Header="_Paramètres">
+                    <MenuItem Command="self:CustomCommands.Classes"/>
+                    <MenuItem Command="self:CustomCommands.Profs" Header="Professeurs"/>
+                    <MenuItem Command="self:CustomCommands.Preaffectations" Header="Pré-affectations de classes"/>
+                    <MenuItem Command="self:CustomCommands.PreferencesNiveaux" Header="Préférences de niveaux"/>
+                    <MenuItem Command="self:CustomCommands.Criteres" Header="Classement des préférences"/>
+                </MenuItem>
+                <MenuItem Header="S_olutions">
+                    <MenuItem Command="self:CustomCommands.Simuler" Header="Lancer le calcul..."/>
+                    <Separator/>
+                    <MenuItem Header="Ouvrir une solution"/>
+                    <MenuItem Header="Enregistrer la solution"/>
+                    <MenuItem Header="Exporter la solution..."/>
+                </MenuItem>
+                <MenuItem Header="?">
+                    <MenuItem Header="Aide"/>
+                    <MenuItem Header="A propos de..."/>
+                </MenuItem>
+            </Menu>
+            <DockPanel>
+                <StatusBar DockPanel.Dock="Bottom">
+                    <StatusBar.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                            </Grid>
+                        </ItemsPanelTemplate>
+                    </StatusBar.ItemsPanel>
+                    <StatusBarItem>
+                        <TextBlock Name="Statut">Bienvenue</TextBlock>
+                    </StatusBarItem>
+                    <StatusBarItem Grid.Column="1">
+                        <ProgressBar Name="Progres" Width="200" Height="16"/>
+                    </StatusBarItem>
+                </StatusBar>
+                <Grid Name="Contenu"></Grid>
+            </DockPanel>
+        </DockPanel>
+    </Grid>
+</Window>

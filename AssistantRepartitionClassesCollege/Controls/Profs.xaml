@@ -1,0 +1,37 @@
+﻿<UserControl x:Class="AssistantRepartitionClassesCollege.Controls.Profs"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid>
+        <DataGrid ItemsSource="{Binding Profs}" Name="grille" HorizontalAlignment="Stretch" Margin="5" VerticalAlignment="Stretch" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn MinWidth="60" Header="Nom" Binding="{Binding Nom}" />
+                <DataGridTemplateColumn Header="Service">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Slider Value="{Binding Service, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" Minimum="0" Maximum="18" TickFrequency="0.5" Width="360" SmallChange="0.5" TickPlacement="BottomRight" />
+                                <Label Content="{Binding Service}" />
+                                <Label Content="heures"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Heures sup (max)">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Slider Value="{Binding MaxHeuresSup, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" Minimum="1" Maximum="5" TickFrequency="0.5" Width="100" SmallChange="0.5" TickPlacement="BottomRight" />
+                                <Label Content="{Binding MaxHeuresSup}" />
+                                <Label Content="heures"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

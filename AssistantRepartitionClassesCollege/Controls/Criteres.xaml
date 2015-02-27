@@ -1,0 +1,33 @@
+﻿<UserControl x:Class="AssistantRepartitionClassesCollege.Controls.Criteres"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid DataContext="{Binding Criteres}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Label Grid.Column="0" Grid.Row="0">Importance</Label>
+        <TextBox TextAlignment="Center" Grid.Column="0" Grid.Row="1" Name="LimiterDecoupeClasses" Text="{Binding CritereNonDecoupageClasses}"/>
+        <Label Grid.Column="1" Grid.Row="1">Limiter les découpes de classes entre plusieurs professeurs</Label>
+        <TextBox TextAlignment="Center" Grid.Column="0" Grid.Row="2" Name="SiDecoupeAutourHeureComplete" Text="{Binding CritereDecoupageSurHeurePleine}"/>
+        <Label Grid.Column="1" Grid.Row="2">Si une classe est découpée, privilégier une découpe en heures pleines</Label>
+        <TextBox TextAlignment="Center" Grid.Column="0" Grid.Row="3" Name="LimiterNombreNiveauxDifferentsParProf" Text="{Binding CritereLimiterNiveauxParProf}"/>
+        <Label Grid.Column="1" Grid.Row="3">Limiter le nombre de niveaux différents pour chaque professeur</Label>
+        <TextBox TextAlignment="Center" Grid.Column="0" Grid.Row="4" Name="ProfSoutienIdentiqueProfCours" Text="{Binding CriterePrivilegierMemeProfCoursEtSoutien}"/>
+        <Label Grid.Column="1" Grid.Row="4">Privilégier le même professeur pour le soutien que pour les cours</Label>
+        <TextBox TextAlignment="Center" Grid.Column="0" Grid.Row="5" Name="RespectPreferencesNiveauxOptionnelles" Text="{Binding CriterePriseEnComptePreferencesNiveaux}"/>
+        <Label Grid.Column="1" Grid.Row="5">Prendre en compte les préférences de niveaux optionnelles</Label>
+    </Grid>
+</UserControl>

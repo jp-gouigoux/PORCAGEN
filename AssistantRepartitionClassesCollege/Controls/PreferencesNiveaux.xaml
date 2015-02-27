@@ -1,0 +1,45 @@
+﻿<UserControl x:Class="AssistantRepartitionClassesCollege.Controls.PreferencesNiveaux"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:core="clr-namespace:System;assembly=mscorlib" 
+             xmlns:local="clr-namespace:AssistantRepartitionClassesCollege" 
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <UserControl.Resources>
+        <ObjectDataProvider x:Key="EnumNiveau" MethodName="GetValues" ObjectType="{x:Type core:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:TypeExtension Type="local:Niveau"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ObjectDataProvider x:Key="EnumPreference" MethodName="GetValues" ObjectType="{x:Type core:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:TypeExtension Type="local:Preference"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </UserControl.Resources>
+    <Grid>
+        <DataGrid ItemsSource="{Binding PreferencesNiveaux}" Name="grille" HorizontalAlignment="Stretch" Margin="5" VerticalAlignment="Stretch" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Prof">
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}, Path=DataContext.Profs}" 
+                                      DisplayMemberPath="Nom" 
+                                      SelectedValuePath="Nom" 
+                                      SelectedValue="{Binding Prof}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Prof}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridComboBoxColumn Header="Type de préférence" SelectedItemBinding="{Binding Mode}" ItemsSource="{Binding Source={StaticResource EnumPreference}}"/>
+                <DataGridComboBoxColumn Header="Niveau" SelectedItemBinding="{Binding Niveau}" ItemsSource="{Binding Source={StaticResource EnumNiveau}}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>
