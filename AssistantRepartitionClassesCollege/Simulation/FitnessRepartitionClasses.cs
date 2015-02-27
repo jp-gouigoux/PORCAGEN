@@ -11,56 +11,51 @@ namespace AssistantRepartitionClassesCollege
 {
     class FitnessRepartitionClasses : IFitnessFunction
     {
-        //string[] profs = { "Elizabeth", "Anne", "Guénaëlle", "Julie", "BMP18", "BMP9", "Morgane" };
-        //double[] heuresProfs = { 10, 18, 4.5, 15, 18, 8, 9 }; // Soit 82,5 heures
-        //string[] classes = { "6B", "6C", "6D", "6E", "6AP", "6BP", "6CP", "6DP", "6EP", "5A", "5B", "5C", "5D", "5E", "5F", "4A", "4B", "4C", "4D", "4E", "4F" };
-        //double[] dureesClasses = { 5, 5, 5, 5, 0.5, 0.5, 0.5, 0.5, 0.5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 }; // Soit 84 heures
-        //int[] niveauClasses = { 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4 };
-
-        double[] heuresServiceProfsApresPreaffectations;
-        string[] classes;
-        double[] dureesClasses;
-        int[] niveauClasses;
-
-        int N1, N2, N3, N4, N5;
-
         private ModeleProjet modele = null;
+        int N1, N2, N3, N4;
 
-        private List<ModeleProjet.Classe> classesARepartirEnEntier;
+        private Dictionary<ModeleProjet.Prof, double> dicoHeuresServiceProfHorsPreaffectations = new Dictionary<ModeleProjet.Prof, double>();
+        private List<ModeleProjet.Classe> classesARepartirEnEntier = null;
+        private List<ModeleProjet.Classe> classesARepartir = null;
+        private List<ModeleProjet.Classe> classesDeSoutien = null;
 
         public FitnessRepartitionClasses(ModeleProjet modele)
         {
+            // Penser à mettre des validation avant de lancer
+
             this.modele = modele;
 
-            heuresServiceProfsApresPreaffectations = modele.Profs.ConvertAll(p => p.Service - modele.Preaffectations
-                .Where(pr => pr.Prof == p.Nom)
-                .Sum(pr => modele.Classes.First(c => c.Nom == pr.Classe).Duree)).ToArray();
+            dicoHeuresServiceProfHorsPreaffectations = modele.Profs.ToDictionary(p => p,
+                p => p.Service - modele.Preaffectations
+                    .Where(pr => pr.Prof == p.Nom)
+                    .Sum(pr => modele.Classes.First(c => c.Nom == pr.Classe).Duree));
 
             classesARepartirEnEntier = modele.Classes
                 .Where(c => !c.AutoriserDecoupe && !modele.Preaffectations.Any(p => p.Classe == c.Nom)).ToList();
 
-            List<ModeleProjet.Classe> classesAutorisantDecoupeEtNonPreaffectees = modele.Classes
+            List<ModeleProjet.Classe> classesARepartirAvecDecoupePossible = modele.Classes
                 .Where(c => c.AutoriserDecoupe && !modele.Preaffectations.Any(p => p.Classe == c.Nom)).ToList();
 
-            List<ModeleProjet.Classe> classesAvecSoutien = new List<ModeleProjet.Classe>();
+            classesDeSoutien = new List<ModeleProjet.Classe>();
             foreach (ModeleProjet.Classe c in modele.Classes.Where(c => c.DureeSoutien > 0))
-                classesAvecSoutien.Add(new ModeleProjet.Classe() { Nom = c.Nom + "P", AutoriserDecoupe = false, Duree = c.DureeSoutien, Niveau = c.Niveau });
+                classesDeSoutien.Add(new ModeleProjet.Classe() { Nom = c.Nom + "P", AutoriserDecoupe = false, Duree = c.DureeSoutien, Niveau = c.Niveau });
 
-            List<ModeleProjet.Classe> classesARepartir = classesAutorisantDecoupeEtNonPreaffectees.Concat(classesAvecSoutien).ToList();
-            classes = classesARepartir.ConvertAll(c => c.Nom).ToArray();
-            dureesClasses = classesARepartir.ConvertAll(c => c.Duree).ToArray();
-            niveauClasses = classesARepartir.ConvertAll(c => (int)c.Niveau).ToArray();
+            classesARepartir = classesARepartirAvecDecoupePossible.Concat(classesDeSoutien).ToList();
 
-            // Refactoriser pour ne pas calculer deux fois avec
+            double heuresSupNecessairesPourEquilibre = modele.Classes.Sum(c => c.Duree + c.DureeSoutien) - modele.Profs.Sum(p => p.Service);
+
+            // On rappelle le mode de construction du chromosome :
+            // - N1 gènes pour les classes qu'on ne peut pas découper (un prof affecté et un seul)
+            // - N2 gènes pour les professeurs à aligner
+            // - N3 gènes pour les classes à aligner, c'est-à-dire celles qui ne sont pas marquées "sans découpe", et auquelles on a aussi enlevé celles pré-affectées, plus les simili-classes reprenant les classes avec du soutien
+            // - N4 gènes pour le nombre de demi-heures supplémentaires nécessaires pour équilibrer
             N1 = classesARepartirEnEntier.Count();
-            //N1 = modele.Classes.Where(c => !c.AutoriserDecoupe && !modele.Preaffectations.Any(p => p.Classe == c.Nom)).Count();
             N2 = modele.Profs.Count;
-            N3 = modele.Classes.Where(c => c.AutoriserDecoupe && !modele.Preaffectations.Any(p => p.Classe == c.Nom)).Count();
-            N4 = modele.Classes.Where(c => c.DureeSoutien > 0).Count();
-            N5 = (int)(2 * (modele.Classes.Sum(c => c.Duree + c.DureeSoutien) - modele.Profs.Sum(p => p.Service)));
+            N3 = classesARepartir.Count;
+            N4 = (int)(2 * heuresSupNecessairesPourEquilibre);
         }
 
-        public int NombreGenesNecessaires { get { return N1 + N2 + N3 + N4 + N5; } }
+        public int NombreGenesNecessaires { get { return N1 + N2 + N3 + N4; } }
 
         public double Evaluate(IChromosome chromosome)
         {
@@ -71,13 +66,6 @@ namespace AssistantRepartitionClassesCollege
         {
             // A noter qu'on pourrait peut-être utiliser un PermutationChromosome.
 
-            // On rappelle le mode de construction du chromosome :
-            // - N1 gènes pour les classes qu'on ne peut pas découper (un prof affecté et un seul)
-            // - N2 gènes pour les professeurs à aligner
-            // - N3 gènes pour les classes à aligner, c'est-à-dire celles qui ne sont pas marquées "sans découpe", et auquelles on a aussi enlevé celles pré-affectées
-            // - N4 gènes pour les classes avec des heures de soutien, qui sont traitées à part
-            // - N5 gènes pour le nombre de demi-heures supplémentaires nécessaires pour équilibrer
-
             ushort[] genes = ((ShortArrayChromosome)chromosome).Value;
 
             // Factoriser N2 avec NBPROFS
@@ -85,110 +73,121 @@ namespace AssistantRepartitionClassesCollege
             // C'est ce dictionnaire qu'on va remplir progressivement, avec les différents cas
             Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf = new Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>>();
 
-            // Affectation des classes sans découpe
-            int NBPROFS = modele.Profs.Count; // Ressortir toutes les opérations à ne faire qu'une seule fois
-            double[] heuresProfsRestantes = new double[NBPROFS];
-            Array.Copy(heuresServiceProfsApresPreaffectations, heuresProfsRestantes, NBPROFS);
+            // Au début, on affecte toutes les heures de service des professeurs dans un dictionnaire, qu'on va diminuer au fur et à mesure des affectations
+            Dictionary<ModeleProjet.Prof, double> dicoHeuresServiceProfRestantes = new Dictionary<ModeleProjet.Prof, double>(dicoHeuresServiceProfHorsPreaffectations);
 
+            // Affectation des classes sans découpe
+            TraiterClassesSansDecoupe(genes, dicoAffectationClasseVersProf, dicoHeuresServiceProfRestantes);
+
+            // Affectation des classes à répartir
+            TraiterClassesARepartir(genes, dicoAffectationClasseVersProf, dicoHeuresServiceProfRestantes);
+
+            // Préférence sur le même prof en classe et en soutien pour les classes qui ont du soutien
+            double fitnessProfSixiemeIdentiqueAP = CalculerFitnessMemeProfSoutienQueClasse(dicoAffectationClasseVersProf);
+
+            // Prise en compte des préférences de niveaux des profs
+            double fitnessPreferenceNiveau = CalculerFitnessPreferenceNiveau(dicoAffectationClasseVersProf);
+
+            // Le moins possible de niveaux différents par prof
+            double fitnessMinimumNiveauxDifferents = CalculerFitnessMinimiserNombreNiveauxDifferentsParProf(dicoAffectationClasseVersProf);
+
+            // Fitness sur les découpes de classes, pour l'instant le relatif entre la découpe parfaite et le nombre de créneaux
+            int nbSurcreneaux;
+            double fitnessMoinsDeDecoupePossible = CalculerFitnessDecoupeMinimaleClasses(dicoAffectationClasseVersProf, out nbSurcreneaux);
+
+            // Pas de créneau de type demi-heure
+            double fitnessMoinsDeDecoupePossibleDemiHeure = CalculerFitnessLimiterDecoupageSemiHoraires(dicoAffectationClasseVersProf, nbSurcreneaux);
+
+            // Affichage éventuel des résultats (en général, pour le dernier chromosome, optimal de la simulation)
+            if (scribe != null)
+            {
+                AfficherResultats(dicoAffectationClasseVersProf, scribe);
+                scribe.WriteLine("Moins de découpe possible (40%) = " + fitnessMoinsDeDecoupePossible);
+                scribe.WriteLine("Moins de découpe possible hors horaire (25%) = " + fitnessMoinsDeDecoupePossibleDemiHeure);
+                scribe.WriteLine("Moins de niveaux différents (20%) = " + fitnessMinimumNiveauxDifferents);
+                scribe.WriteLine("Prof sixième identique AP (14%) = " + fitnessProfSixiemeIdentiqueAP);
+                scribe.WriteLine("Anne sans quatrième (01%) = " + fitnessPreferenceNiveau);
+            }
+
+            // Fitness totale
+            return 0.40 * fitnessMoinsDeDecoupePossible
+                + 0.25 * fitnessMoinsDeDecoupePossibleDemiHeure
+                + 0.20 * fitnessMinimumNiveauxDifferents
+                + 0.14 * fitnessProfSixiemeIdentiqueAP
+                + 0.01 * fitnessPreferenceNiveau;
+        }
+
+        private void TraiterClassesSansDecoupe(
+            ushort[] genes,
+            Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf,
+            Dictionary<ModeleProjet.Prof, double> dicoHeuresServiceProfRestantes)
+        {
+            // Il y a un gène par classe sans découpe, et chacun peut être traité à peu près indépendamment
             for (int i = 0; i < N1; i++)
             {
-                int indexProfChoisi = genes[i] % NBPROFS;
+                // On fait un modulo sur le nombre de prof pour que le gène désigne un prof en particulier
+                int indexProfChoisi = genes[i] % modele.Profs.Count;
 
-                while (heuresProfsRestantes[indexProfChoisi] < classesARepartirEnEntier[i].Duree
+                // Par contre, si ce prof n'a plus assez d'heures restantes, ou bien s'il ne peut pas avoir ce niveau de classe, on va passer au suivant dans la liste
+                while (dicoHeuresServiceProfRestantes[modele.Profs[indexProfChoisi]] < classesARepartirEnEntier[i].Duree
                     || modele.PreferencesNiveaux.Any(
                         pr => pr.Niveau == classesARepartirEnEntier[i].Niveau
                         && pr.Prof == modele.Profs[indexProfChoisi].Nom
                         && pr.Mode == Preference.NePeutPasAvoir))
-                    indexProfChoisi = (indexProfChoisi + 1) % NBPROFS;
+                    indexProfChoisi = (indexProfChoisi + 1) % modele.Profs.Count;
 
-                heuresProfsRestantes[indexProfChoisi] -= classesARepartirEnEntier[i].Duree;
+                // Quand on a trouvé le prof qui prendra cette classe, on diminue d'autant ses heures restant à affecter
+                dicoHeuresServiceProfRestantes[modele.Profs[indexProfChoisi]] -= classesARepartirEnEntier[i].Duree;
 
-                // Affectation du résultat
+                // Ajout du résultat dans le dictionnaire des affectations de classes
                 Dictionary<ModeleProjet.Prof, double> presenceProf = new Dictionary<ModeleProjet.Prof, double>();
                 presenceProf.Add(modele.Profs[indexProfChoisi], classesARepartirEnEntier[i].Duree);
                 dicoAffectationClasseVersProf.Add(classesARepartirEnEntier[i], presenceProf);
             }
+        }
 
-            //// Affichage éventuel des profs des classes sans découpe
-            //if (scribe != null)
-            //    foreach (int index in listeIndexProfChoisisPourClassesSansDecoupe)
-            //        scribe.WriteLine(classesARepartirEnEntier[index].Nom + " : " + modele.Profs[index].Nom);
-
-            //// Affectation des trois troisièmes (3A pré-affectée à Gwen)
-            //int NBPROFS = profs.Length;
-            //double[] heuresProfsRestantes = new double[NBPROFS];
-            //Array.Copy(heuresProfs, heuresProfsRestantes, NBPROFS);
-            //int indexProfTroisiemeB = genes[0] % (NBPROFS - 1); // NBPROFS - 1, pour que Morgane, en dernier sur la liste, n'aie pas de troisième
-            //heuresProfsRestantes[indexProfTroisiemeB] -= 4.5;
-            //int indexProfTroisiemeC = genes[1] % (NBPROFS - 1); // NBPROFS - 1, pour que Morgane, en dernier sur la liste, n'aie pas de troisième
-            //while (heuresProfsRestantes[indexProfTroisiemeC] < 4.5)
-            //    indexProfTroisiemeC = (indexProfTroisiemeC + 1) % (NBPROFS - 1); // NBPROFS - 1, pour que Morgane, en dernier sur la liste, n'aie pas de troisième
-            //heuresProfsRestantes[indexProfTroisiemeC] -= 4.5;
-            //int indexProfTroisiemeD = genes[2] % (NBPROFS - 1); // NBPROFS - 1, pour que Morgane, en dernier sur la liste, n'aie pas de troisième
-            //while (heuresProfsRestantes[indexProfTroisiemeD] < 4.5)
-            //    indexProfTroisiemeD = (indexProfTroisiemeD + 1) % (NBPROFS - 1); // NBPROFS - 1, pour que Morgane, en dernier sur la liste, n'aie pas de troisième
-            //heuresProfsRestantes[indexProfTroisiemeD] -= 4.5;
-
-            //// Affichage éventuel des profs de troisième
-            //if (scribe != null)
-            //{
-            //    scribe.Write("3A: " + profs[2]);
-            //    scribe.Write(" | 3B: " + profs[indexProfTroisiemeB]);
-            //    scribe.Write(" | 3C: " + profs[indexProfTroisiemeC]);
-            //    scribe.WriteLine(" | 3D: " + profs[indexProfTroisiemeD]);
-            //}
-
+        private List<Dictionary<int, double>> TraiterClassesARepartir(
+            ushort[] genes, 
+            Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf,
+            Dictionary<ModeleProjet.Prof, double> dicoHeuresServiceProfRestantes)
+        {
             // Récupération de la liste ordonnée des profs
-            int[] positionsProfs = new int[NBPROFS];
-            List<int> positionsRestantes = Enumerable.Range(0, NBPROFS).ToList();
-            for (int i = 0; i < NBPROFS; i++)
+            int[] positionsProfs = new int[modele.Profs.Count];
+            List<int> positionsRestantes = Enumerable.Range(0, modele.Profs.Count).ToList();
+            for (int i = 0; i < modele.Profs.Count; i++)
             {
                 ushort gene = genes[N1 + i];
-                int offset = gene % (NBPROFS - i);
+                int offset = gene % (modele.Profs.Count - i);
                 positionsProfs[i] = positionsRestantes[offset];
                 positionsRestantes.RemoveAt(offset);
             }
 
             // Récupération de la liste ordonnée des classes
-            int NBCLASSES = classes.Length; // Normalement NBCLASSES = N3 + N4
-            int[] positionsClasses = new int[NBCLASSES];
-            positionsRestantes = Enumerable.Range(0, NBCLASSES).ToList();
-            for (int i = 0; i < NBCLASSES; i++)
+            int[] positionsClasses = new int[classesARepartir.Count];
+            positionsRestantes = Enumerable.Range(0, classesARepartir.Count).ToList();
+            for (int i = 0; i < classesARepartir.Count; i++)
             {
                 ushort gene = genes[N1 + N2 + i];
-                int offset = gene % (NBCLASSES - i);
+                int offset = gene % (classesARepartir.Count - i);
                 positionsClasses[i] = positionsRestantes[offset];
                 positionsRestantes.RemoveAt(offset);
             }
 
             // On ajuste les heures des profs avec les demi-heures supplémentaires
-            for (int i = 0; i < N5; i++)
+            for (int i = 0; i < N4; i++)
             {
-                int indexProfChoisi = genes[N1 + N2 + N3 + N4 + i] % NBPROFS;
-                heuresProfsRestantes[indexProfChoisi] += 0.5;
+                int indexProfChoisi = genes[N1 + N2 + N3 + i] % modele.Profs.Count;
+                dicoHeuresServiceProfRestantes[modele.Profs[indexProfChoisi]] += 0.5;
             }
-
-            //// Elizabeth
-            //if (genes[3 + NBPROFS + NBCLASSES] % 3 == 0) heuresProfsRestantes[0] += 0.5;
-            //if (genes[3 + NBPROFS + NBCLASSES + 1] % 3 == 0) heuresProfsRestantes[0] += 0.5;
-            //if (genes[3 + NBPROFS + NBCLASSES + 2] % 3 == 0) heuresProfsRestantes[0] += 0.5;
-            //// Anne
-            //if (genes[3 + NBPROFS + NBCLASSES] % 3 == 1) heuresProfsRestantes[1] += 0.5;
-            //if (genes[3 + NBPROFS + NBCLASSES + 1] % 3 == 1) heuresProfsRestantes[1] += 0.5;
-            //if (genes[3 + NBPROFS + NBCLASSES + 2] % 3 == 1) heuresProfsRestantes[1] += 0.5;
-            //// BMP18
-            //if (genes[3 + NBPROFS + NBCLASSES] % 3 == 2) heuresProfsRestantes[5] += 0.5;
-            //if (genes[3 + NBPROFS + NBCLASSES + 1] % 3 == 2) heuresProfsRestantes[5] += 0.5;
-            //if (genes[3 + NBPROFS + NBCLASSES + 2] % 3 == 2) heuresProfsRestantes[5] += 0.5;
 
             // Parcours des frontières des classes
             List<double> frontieresClasses = new List<double>();
             double cumulClasses = 0;
             List<Tuple<double, double, int>> repartitionClasses = new List<Tuple<double, double, int>>();
-            for (int i = 0; i < NBCLASSES; i++)
+            for (int i = 0; i < classesARepartir.Count; i++)
             {
                 double backupCumul = cumulClasses;
-                cumulClasses += dureesClasses[positionsClasses[i]];
+                cumulClasses += classesARepartir[positionsClasses[i]].Duree;
                 frontieresClasses.Add(cumulClasses);
                 repartitionClasses.Add(new Tuple<double, double, int>(backupCumul, cumulClasses, positionsClasses[i]));
             }
@@ -197,10 +196,10 @@ namespace AssistantRepartitionClassesCollege
             List<double> frontieresHeuresProfs = new List<double>();
             double cumulHeuresProfs = 0;
             List<Tuple<double, double, int>> repartitionProfs = new List<Tuple<double, double, int>>();
-            for (int i = 0; i < NBPROFS; i++)
+            for (int i = 0; i < modele.Profs.Count; i++)
             {
                 double backupCumul = cumulHeuresProfs;
-                cumulHeuresProfs += heuresProfsRestantes[positionsProfs[i]];
+                cumulHeuresProfs += dicoHeuresServiceProfRestantes[modele.Profs[positionsProfs[i]]];
                 frontieresHeuresProfs.Add(cumulHeuresProfs);
                 repartitionProfs.Add(new Tuple<double, double, int>(backupCumul, cumulHeuresProfs, positionsProfs[i]));
             }
@@ -217,7 +216,7 @@ namespace AssistantRepartitionClassesCollege
 
             // On boucle ensuite pour remplir les affectations, potentiellement multiples
             List<Dictionary<int, double>> affectationsClasses = new List<Dictionary<int, double>>();
-            for (int i = 0; i < NBCLASSES; i++)
+            for (int i = 0; i < classesARepartir.Count; i++)
                 affectationsClasses.Add(new Dictionary<int, double>());
             for (int i = 0; i < frontieres.Count; i++)
             {
@@ -239,101 +238,64 @@ namespace AssistantRepartitionClassesCollege
                 if (i > 0) dureeCreneau -= frontieres[i - 1];
                 dico.Add(repartitionProfs[indexRepartitionProf].Item3, dureeCreneau);
             }
+            return affectationsClasses;
+        }
 
-            // Penser à mettre des validation avant de lancer
-
-            // Préférence sur le même prof en classe et en soutien pour les classes qui ont du soutien
+        private double CalculerFitnessMemeProfSoutienQueClasse(Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf)
+        {
             double fitnessProfSixiemeIdentiqueAP = 0.0;
-            IEnumerable<ModeleProjet.Classe> classesAvecSupport = modele.Classes.Where(c => c.Niveau == Niveau.Sixième);
-            foreach (ModeleProjet.Classe classe in classesAvecSupport)
+            foreach (ModeleProjet.Classe classeDeSoutien in classesDeSoutien)
             {
-                int indexClasseSoutien = classes.ToList().FindIndex(c => c == classe.Nom + "P"); // remplacer par (Soutien) ou quelque chose de moins dangereux vu que l'utilisateur choisit ses noms
-                int indexProfSoutien = -1;
-                foreach (KeyValuePair<int, double> couple in affectationsClasses[indexClasseSoutien])
-                    indexProfSoutien = couple.Key;
+                // On retrouve d'abord quel prof a la classe en soutien
+                Dictionary<ModeleProjet.Prof, double> affectationSoutien = dicoAffectationClasseVersProf[classeDeSoutien];
+                ModeleProjet.Prof profAffecteAuSoutien = affectationSoutien.First().Key;
 
-                ModeleProjet.Preaffectation preaff = modele.Preaffectations.FirstOrDefault(pr => pr.Classe == classe.Nom);
-                int indexProfClasse = -1;
+                // Ensuite, on regarde d'abord si le prof n'a pas été préaffecté à la classe
+                string nomClasseCoursCorrespondante = classeDeSoutien.Nom.Substring(0, 2);
+                ModeleProjet.Prof profAffecteAuCours = null;
+                ModeleProjet.Preaffectation preaff = modele.Preaffectations.FirstOrDefault(pr => pr.Classe == nomClasseCoursCorrespondante);
                 if (preaff != null)
+                    profAffecteAuCours = modele.Profs.Find(p => p.Nom == preaff.Prof);
+
+                // S'il n'a pas été préaffecté, on le cherche dans le dictionnaire d'affectation issu de la simulation
+                if (profAffecteAuCours == null)
                 {
-                    indexProfClasse = modele.Profs.FindIndex(p => p.Nom == preaff.Prof);
-                }
-                else
-                {
-                    int indexClasseAssociee = classes.ToList().FindIndex(c => c == classe.Nom);
-                    foreach (KeyValuePair<int, double> couple in affectationsClasses[indexClasseAssociee])
-                        indexProfClasse = couple.Key;
+                    ModeleProjet.Classe classeDeCours = modele.Classes.Find(c => c.Nom == nomClasseCoursCorrespondante);
+                    Dictionary<ModeleProjet.Prof, double> affectationCours = dicoAffectationClasseVersProf[classeDeCours];
+                    profAffecteAuCours = affectationCours.First().Key;
                 }
 
-                if (indexProfClasse == indexProfSoutien)
-                    fitnessProfSixiemeIdentiqueAP += 1.0 / classesAvecSupport.Count();
+                // Si les deux profs correspondent, ça augmente la fitness
+                if (profAffecteAuCours == profAffecteAuSoutien)
+                    fitnessProfSixiemeIdentiqueAP += 1.0 / classesDeSoutien.Count();
             }
 
-            //// Préférence sur les 6P sur le même prof que le 6
-            //// "6B", "6C", "6D", "6E", "6AP", "6BP", "6CP", "6DP", "6EP"
-            ////   0,    1,    2,    3,     4,     5,     6,     7,     8
-            //double fitnessProfSixiemeIdentiqueAP = 0.0;
-            //int indexProf6AP = -1;
-            //foreach (KeyValuePair<int, double> couple in affectationsClasses[4])
-            //    indexProf6AP = couple.Key;
-            //if (indexProf6AP == NBPROFS - 1) fitnessProfSixiemeIdentiqueAP += 0.2; // 6A préaffectée à Morgane, dernière de la liste pour éviter les troisièmes
-            //for (int i = 0; i < 4; i++)
-            //{
-            //    int indexProf6P = -1;
-            //    foreach (KeyValuePair<int, double> couple in affectationsClasses[5 + i])
-            //        indexProf6P = couple.Key;
-            //    int indexProf6 = -1;
-            //    if (affectationsClasses[i].Count == 1)
-            //        foreach (KeyValuePair<int, double> couple in affectationsClasses[i])
-            //            indexProf6 = couple.Key;
-            //    if (indexProf6P == indexProf6) fitnessProfSixiemeIdentiqueAP += 0.2;
-            //}
+            return fitnessProfSixiemeIdentiqueAP;
+        }
 
-            // Prise en compte des préférences de niveaux des profs
+        private double CalculerFitnessPreferenceNiveau(
+            Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf)
+        {
             double fitnessPreferenceNiveau = 0.0;
             IEnumerable<ModeleProjet.PreferenceNiveau> preferencesNonObligatoires = modele.PreferencesNiveaux.Where(pr => pr.Mode != Preference.NePeutPasAvoir);
             foreach (ModeleProjet.PreferenceNiveau pref in preferencesNonObligatoires)
             {
-                int indexProfConcerne = modele.Profs.FindIndex(p => p.Nom == pref.Prof);
-
-                // Refactoriser les deux choix ci-dessous qui sont très proches, mais une fois qu'on aura tout fait marcher
-                if (pref.Mode == Preference.NePreferePasAvoir)
-                {
-                    bool preferenceRespectee = true;
-                    for (int i = 0; i < affectationsClasses.Count; i++)
+                ModeleProjet.Prof profConcerne = modele.Profs.Find(p => p.Nom == pref.Prof);
+                bool preferenceRespectee = pref.Mode == Preference.NePreferePasAvoir;
+                foreach (KeyValuePair<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> couple in dicoAffectationClasseVersProf)
+                    if (couple.Key.Niveau == pref.Niveau && couple.Value.ContainsKey(profConcerne))
                     {
-                        if (niveauClasses[i] == (int)pref.Niveau) // On pourra peut-être se passer de niveauClasses en version entière et tout le temps utiliser le Niveau de type enum
-                        {
-                            foreach (KeyValuePair<int, double> couple in affectationsClasses[i])
-                                if (couple.Key == indexProfConcerne)
-                                {
-                                    preferenceRespectee = false;
-                                    break;
-                                }
-                        }
+                        preferenceRespectee = pref.Mode != Preference.NePreferePasAvoir;
+                        break;
                     }
-                    if (preferenceRespectee) fitnessPreferenceNiveau += 1.0 / preferencesNonObligatoires.Count();
-                }
-                else if (pref.Mode == Preference.PrefereAvoir)
-                {
-                    bool preferenceRespectee = false;
-                    for (int i = 0; i < affectationsClasses.Count; i++)
-                    {
-                        if (niveauClasses[i] == (int)pref.Niveau) // On pourra peut-être se passer de niveauClasses en version entière et tout le temps utiliser le Niveau de type enum
-                        {
-                            foreach (KeyValuePair<int, double> couple in affectationsClasses[i])
-                                if (couple.Key == indexProfConcerne)
-                                {
-                                    preferenceRespectee = true;
-                                    break;
-                                }
-                        }
-                    }
-                    if (preferenceRespectee) fitnessPreferenceNiveau += 1.0 / preferencesNonObligatoires.Count();
-                }
+                if (preferenceRespectee) fitnessPreferenceNiveau += 1.0 / preferencesNonObligatoires.Count();
             }
+            return fitnessPreferenceNiveau;
+        }
 
-            // Le moins possible de niveaux différents par prof
+        private double CalculerFitnessMinimiserNombreNiveauxDifferentsParProf(
+            Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf)
+        {
             Dictionary<ModeleProjet.Prof, List<Niveau>> dicoNiveauxParProf = new Dictionary<ModeleProjet.Prof, List<Niveau>>();
             foreach (KeyValuePair<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> affectation in dicoAffectationClasseVersProf)
             {
@@ -348,7 +310,6 @@ namespace AssistantRepartitionClassesCollege
                 }
             }
 
-
             // En théorie, la fitness parfaite serait de NBPROFS (tous les profs ont un seul niveau), et celle la plus pourrie
             // serait de NBCLASSES (tous les profs n'ont que des niveaux différents pour chacune de leurs classes)
             //double fitnessMinimumNiveauxDifferents = (0.0 - 1.0 / (NBCLASSES - NBPROFS)) * totalNiveauxProfs + 1.0 - NBPROFS * (0.0 - 1.0 / (NBCLASSES - NBPROFS));
@@ -356,23 +317,32 @@ namespace AssistantRepartitionClassesCollege
             int totalNiveauxProfs = dicoNiveauxParProf.Sum(couple => couple.Value.Count);
             double fitnessMinimumNiveauxDifferents = 1.0 - (totalNiveauxProfs - 10.0) / 20.0;
             fitnessMinimumNiveauxDifferents = Math.Min(1.0, Math.Max(0.0, fitnessMinimumNiveauxDifferents));
+            return fitnessMinimumNiveauxDifferents;
+        }
 
-            // Fitness sur les découpes de classes, pour l'instant le relatif entre la découpe parfaite et le nombre de créneaux
-            int nbAffectations = affectationsClasses.Count;
+        private double CalculerFitnessDecoupeMinimaleClasses(
+            Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf,
+            out int nbSurcreneaux)
+        {
+            int nbAffectations = dicoAffectationClasseVersProf.Count;
             int nbCreneauxTotaux = 0;
-            foreach (Dictionary<int, double> dico in affectationsClasses)
-                nbCreneauxTotaux += dico.Count;
-            int nbSurcreneaux = nbCreneauxTotaux - nbAffectations;
+            foreach (KeyValuePair<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> couple in dicoAffectationClasseVersProf)
+                nbCreneauxTotaux += couple.Value.Count;
+            nbSurcreneaux = nbCreneauxTotaux - nbAffectations;
             double Valeur = 1.0 - nbSurcreneaux / 2.0; // A deux découpages de classes, on a une fitness de 0
-            double fitnessMoinsDeDecoupePossible = Math.Max(0, Valeur); // Juste pour empêcher les fitness négatives
+            return Math.Max(0, Valeur); // Juste pour empêcher les fitness négatives
+        }
 
-            // Pas de créneau de type demi-heure
+        private static double CalculerFitnessLimiterDecoupageSemiHoraires(
+            Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf,
+            int nbSurcreneaux)
+        {
             int nbCreneauxSemiHoraires = 0;
-            foreach (Dictionary<int, double> dico in affectationsClasses)
+            foreach (KeyValuePair<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> affectation in dicoAffectationClasseVersProf)
             {
-                if (dico.Count > 1)
+                if (affectation.Value.Count > 1)
                 {
-                    foreach (KeyValuePair<int, double> couple in dico)
+                    foreach (KeyValuePair<ModeleProjet.Prof, double> couple in affectation.Value)
                     {
                         double dureePremierCreneau = couple.Value;
                         if (dureePremierCreneau != Math.Floor(dureePremierCreneau))
@@ -381,28 +351,12 @@ namespace AssistantRepartitionClassesCollege
                     }
                 }
             }
-            double fitnessMoinsDeDecoupePossibleDemiHeure = 
+            double fitnessMoinsDeDecoupePossibleDemiHeure =
                 nbSurcreneaux == 0
                 ? 1.0
                 : 1.0 - nbCreneauxSemiHoraires / nbSurcreneaux;
             fitnessMoinsDeDecoupePossibleDemiHeure = Math.Max(0, fitnessMoinsDeDecoupePossibleDemiHeure);
-
-            // Fitness totale
-            if (scribe != null)
-            {
-                AfficherResultats(dicoAffectationClasseVersProf, scribe);
-
-                scribe.WriteLine("Moins de découpe possible (40%) = " + fitnessMoinsDeDecoupePossible);
-                scribe.WriteLine("Moins de découpe possible hors horaire (25%) = " + fitnessMoinsDeDecoupePossibleDemiHeure);
-                scribe.WriteLine("Moins de niveaux différents (20%) = " + fitnessMinimumNiveauxDifferents);
-                scribe.WriteLine("Prof sixième identique AP (14%) = " + fitnessProfSixiemeIdentiqueAP);
-                scribe.WriteLine("Anne sans quatrième (01%) = " + fitnessPreferenceNiveau);
-            }
-            return 0.40 * fitnessMoinsDeDecoupePossible
-                + 0.25 * fitnessMoinsDeDecoupePossibleDemiHeure
-                + 0.20 * fitnessMinimumNiveauxDifferents
-                + 0.14 * fitnessProfSixiemeIdentiqueAP
-                + 0.01 * fitnessPreferenceNiveau;
+            return fitnessMoinsDeDecoupePossibleDemiHeure;
         }
 
         private void AfficherResultats(Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf, StringWriter scribe)
