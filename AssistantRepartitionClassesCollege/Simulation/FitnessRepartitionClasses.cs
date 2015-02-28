@@ -33,14 +33,11 @@ namespace AssistantRepartitionClassesCollege
             classesARepartirEnEntier = modele.Classes
                 .Where(c => !c.AutoriserDecoupe && !modele.Preaffectations.Any(p => p.Classe == c.Nom)).ToList();
 
-            List<ModeleProjet.Classe> classesARepartirAvecDecoupePossible = modele.Classes
-                .Where(c => c.AutoriserDecoupe && !modele.Preaffectations.Any(p => p.Classe == c.Nom)).ToList();
-
             classesDeSoutien = new List<ModeleProjet.Classe>();
             foreach (ModeleProjet.Classe c in modele.Classes.Where(c => c.DureeSoutien > 0))
                 classesDeSoutien.Add(new ModeleProjet.Classe() { Nom = c.Nom + "P", AutoriserDecoupe = false, Duree = c.DureeSoutien, Niveau = c.Niveau });
 
-            classesARepartir = classesARepartirAvecDecoupePossible.Concat(classesDeSoutien).ToList();
+            classesARepartir = modele.Classes.Where(c => c.AutoriserDecoupe && !modele.Preaffectations.Any(p => p.Classe == c.Nom)).Concat(classesDeSoutien).ToList();
 
             double heuresSupNecessairesPourEquilibre = modele.Classes.Sum(c => c.Duree + c.DureeSoutien) - modele.Profs.Sum(p => p.Service);
 
@@ -146,8 +143,8 @@ namespace AssistantRepartitionClassesCollege
             }
         }
 
-        private List<Dictionary<int, double>> TraiterClassesARepartir(
-            ushort[] genes, 
+        private void TraiterClassesARepartir(
+            ushort[] genes,
             Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf,
             Dictionary<ModeleProjet.Prof, double> dicoHeuresServiceProfRestantes)
         {
@@ -215,9 +212,8 @@ namespace AssistantRepartitionClassesCollege
             frontieres.Sort();
 
             // On boucle ensuite pour remplir les affectations, potentiellement multiples
-            List<Dictionary<int, double>> affectationsClasses = new List<Dictionary<int, double>>();
-            for (int i = 0; i < classesARepartir.Count; i++)
-                affectationsClasses.Add(new Dictionary<int, double>());
+            foreach (ModeleProjet.Classe classeARepartir in classesARepartir)
+                dicoAffectationClasseVersProf.Add(classeARepartir, new Dictionary<ModeleProjet.Prof,double>());
             for (int i = 0; i < frontieres.Count; i++)
             {
                 // On avance jusqu'à la première répartition de classe concernée
@@ -231,14 +227,13 @@ namespace AssistantRepartitionClassesCollege
                     indexRepartitionProf++;
 
                 // On a alors l'index de la classe, ce qui permet de se positionner dans le dico des affectations
-                Dictionary<int, double> dico = affectationsClasses[repartitionClasses[indexRepartitionClasse].Item3];
+                Dictionary<ModeleProjet.Prof, double> dico = dicoAffectationClasseVersProf[classesARepartir[positionsClasses[indexRepartitionClasse]]];
 
                 // On a également l'index du prof, ce qui permet de rajouter les bonnes heures
                 double dureeCreneau = frontieres[i];
                 if (i > 0) dureeCreneau -= frontieres[i - 1];
-                dico.Add(repartitionProfs[indexRepartitionProf].Item3, dureeCreneau);
+                dico.Add(modele.Profs[positionsProfs[indexRepartitionProf]], dureeCreneau);
             }
-            return affectationsClasses;
         }
 
         private double CalculerFitnessMemeProfSoutienQueClasse(Dictionary<ModeleProjet.Classe, Dictionary<ModeleProjet.Prof, double>> dicoAffectationClasseVersProf)

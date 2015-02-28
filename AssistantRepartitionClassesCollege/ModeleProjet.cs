@@ -131,7 +131,7 @@ namespace AssistantRepartitionClassesCollege
             Criteres = new CriteresCalcul();
 
             TaillePopulation = 1000;
-            NombreIterations = 100;
+            NombreIterations = 1000;
         }
 
         internal void Save(string NomFichierModele)
