@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<OptimisationEmploiDuTemps>
+  <Classes>
+    <Classe nom="6A" niveau="6" duree="5" soutien="0.5"/>
+    <Classe nom="6B" niveau="6" duree="5" soutien="0.5"/>
+    <Classe nom="6C" niveau="6" duree="5" soutien="0.5"/>
+    <Classe nom="6D" niveau="6" duree="5" soutien="0.5"/>
+    <Classe nom="6E" niveau="6" duree="5" soutien="0.5"/>
+    <Classe nom="5A" niveau="5" duree="4"/>
+    <Classe nom="5B" niveau="5" duree="4"/>
+    <Classe nom="5C" niveau="5" duree="4"/>
+    <Classe nom="5D" niveau="5" duree="4"/>
+    <Classe nom="5E" niveau="5" duree="4"/>
+    <Classe nom="5F" niveau="5" duree="4"/>
+    <Classe nom="4A" niveau="4" duree="4"/>
+    <Classe nom="4B" niveau="4" duree="4"/>
+    <Classe nom="4C" niveau="4" duree="4"/>
+    <Classe nom="4D" niveau="4" duree="4"/>
+    <Classe nom="4E" niveau="4" duree="4"/>
+    <Classe nom="4F" niveau="4" duree="4"/>
+    <Classe nom="3A" niveau="3" duree="4.5"/>
+    <Classe nom="3B" niveau="3" duree="4.5"/>
+    <Classe nom="3C" niveau="3" duree="4.5"/>
+    <Classe nom="3D" niveau="3" duree="4.5"/>
+  </Classes>
+  <Profs>
+    <Prof nom="Elizabeth" heures="10"/>
+    <Prof nom="Anne" heures="18"/>
+    <Prof nom="Guénaëlle" heures="9"/>
+    <Prof nom="Julie" heures="15"/>
+    <Prof nom="BMP18" heures="18"/>
+    <Prof nom="BMP8" heures="8"/>
+    <Prof nom="Morgane" heures="14"/>
+  </Profs>
+  <PreAffectations>
+    <PreAffectation classe="6A" prof="Elizabeth"/>
+    <PreAffectation classe="3A" prof="Guénaëlle"/>
+  </PreAffectations>
+  <PreferencesNiveaux>
+    <PreferenceNiveau sens="negatif" mode="obligatoire" niveau="3" prof="Morgane"/>
+    <PreferenceNiveau sens="negatif" mode="optionnel" niveau="4" prof="Anne"/>
+  </PreferencesNiveaux>
+  <Criteres>
+    <LimiterDecoupeClasses pourcentageImportance="40"/>
+    <SiDecoupeAutourHeureComplete pourcentageImportance="25"/>
+    <LimiterNombreNiveauxDifferentsParProf pourcentageImportance="20"/>
+    <ProfSoutienIdentiqueProfCours pourcentageImportance="14"/>
+    <RespectPreferencesNiveauxOptionnelles pourcentageImportance="1"/>
+  </Criteres>
+</OptimisationEmploiDuTemps>
