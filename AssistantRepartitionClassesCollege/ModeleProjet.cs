@@ -122,6 +122,15 @@ namespace AssistantRepartitionClassesCollege
             get { return _serialiseur != null ? _serialiseur : _serialiseur = new XmlSerializer(typeof(ModeleProjet)); }
         }
 
+        private double HeuresServices { get { return Profs.Sum(p => p.Service); } }
+        private double HeuresSupTotalMax { get { return Profs.Sum(p => p.MaxHeuresSup); } }
+        private double HeuresClasses { get { return Classes.Sum(c => c.Duree); } }
+        private double HeuresSoutien { get { return Classes.Sum(c => c.DureeSoutien); } }
+        private double HeuresCoursTotal { get { return HeuresClasses + HeuresSoutien; } }
+        private double HeuresProfsMaxVoulu { get { return HeuresServices + HeuresSupTotalMax; } }
+        private double HeuresProfsMaxTheorique { get { return HeuresServices + 5 * Profs.Count; } } // Variabiliser le 5 si on le fait un jour dans le contrôle graphique
+
+
         public ModeleProjet()
         {
             Classes = new List<Classe>();
@@ -146,6 +155,31 @@ namespace AssistantRepartitionClassesCollege
             string contenu = File.ReadAllText(NomFichierModele);
             StringReader lecteur = new StringReader(contenu);
             return serialiseur.Deserialize(lecteur) as ModeleProjet;
+        }
+
+        internal string AfficherEntetePreCalcul()
+        {
+            string entete = "Heures disponibles : " + HeuresServices + " (service) + " + HeuresSupTotalMax + " (heures sup max) = " + HeuresProfsMaxVoulu + " heures";
+            entete += Environment.NewLine;
+            entete += "Heures à servir : " + HeuresClasses + " (cours) + " + HeuresSoutien + " (soutien) = " + HeuresCoursTotal + " heures";
+            return entete;
+        }
+
+        internal string RequeterAvertissementEventuel()
+        {
+            if (HeuresCoursTotal > HeuresProfsMaxTheorique)
+                return "Le nombre total d'heures de cours est supérieur au nombre total d'heures de service disponibles, "
+                    + "y compris en mettant les heures supplémentaires au maximum pour tous les professeurs. "
+                    + "Il est donc inutile de lancer la simulation, car elle ne pourra pas trouver de solution.";
+
+            if (HeuresCoursTotal > HeuresProfsMaxVoulu)
+                return "Le nombre total d'heures de cours est supérieur au nombre total d'heures de service disponibles, "
+                    + "y compris en comptant les heures supplémentaires dans les limites demandées. Pour que la simulation trouve "
+                    + "une solution, il est donc nécessaire d'étendre ces limites. Il manque "
+                    + Convert.ToString(HeuresCoursTotal - HeuresProfsMaxVoulu)
+                    + " heures.";
+
+            return null;
         }
     }
 }

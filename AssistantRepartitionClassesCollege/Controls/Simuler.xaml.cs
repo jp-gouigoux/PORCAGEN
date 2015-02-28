@@ -35,41 +35,15 @@ namespace AssistantRepartitionClassesCollege.Controls
         {
             ModeleProjet modele = DataContext as ModeleProjet;
 
-            // Déporter toutes la logique ci-dessous dans le modèle, quand elle n'a rien à faire dans le Lancer_Click
-
-            double HeuresServices = modele.Profs.Sum(p => p.Service);
-            double HeuresSupTotalMax = modele.Profs.Sum(p => p.MaxHeuresSup);
-            double HeuresClasses = modele.Classes.Sum(c => c.Duree);
-            double HeuresSoutien = modele.Classes.Sum(c => c.DureeSoutien);
-
-            double HeuresCoursTotal = HeuresClasses + HeuresSoutien;
-            double HeuresProfsMaxVoulu = HeuresServices + HeuresSupTotalMax;
-            double HeuresProfsMaxTheorique = HeuresServices + 5 * modele.Profs.Count; // Variabiliser le 5 si on le fait un jour
-
             Suivi.Inlines.Clear();
-            Suivi.Inlines.Add(new Run("Heures disponibles : " + HeuresServices + " (service) + " + HeuresSupTotalMax + " (heures sup max) = " + HeuresProfsMaxVoulu + " heures"));
-            Suivi.Inlines.Add(new LineBreak());
-            Suivi.Inlines.Add(new Run("Heures à servir : " + HeuresClasses + " (cours) + " + HeuresSoutien + " (soutien) = " + HeuresCoursTotal + " heures"));
+            Suivi.Inlines.Add(new Run(modele.AfficherEntetePreCalcul()));
             Suivi.Inlines.Add(new LineBreak());
             Suivi.Inlines.Add(new LineBreak());
 
-            if (HeuresCoursTotal > HeuresProfsMaxTheorique)
+            string avertissement = modele.RequeterAvertissementEventuel();
+            if (avertissement != null)
             {
-                MessageBox.Show("Le nombre total d'heures de cours est supérieur au nombre total d'heures de service disponibles, "
-                    + "y compris en mettant les heures supplémentaires au maximum pour tous les professeurs. "
-                    + "Il est donc inutile de lancer la simulation, car elle ne pourra pas trouver de solution.",
-                    (Application.Current.MainWindow as MainWindow).Title, MessageBoxButton.OK);
-                return;
-            }
-
-            if (HeuresCoursTotal > HeuresProfsMaxVoulu)
-            {
-                MessageBox.Show("Le nombre total d'heures de cours est supérieur au nombre total d'heures de service disponibles, "
-                    + "y compris en comptant les heures supplémentaires dans les limites demandées. Pour que la simulation trouve "
-                    + "une solution, il est donc nécessaire d'étendre ces limites. Il manque "
-                    + Convert.ToString(HeuresCoursTotal - HeuresProfsMaxVoulu)
-                    + " heures.",
-                    (Application.Current.MainWindow as MainWindow).Title, MessageBoxButton.OK);
+                MessageBox.Show(avertissement, (Application.Current.MainWindow as MainWindow).Title, MessageBoxButton.OK);
                 return;
             }
 
@@ -84,14 +58,6 @@ namespace AssistantRepartitionClassesCollege.Controls
             moteur.RunWorkerCompleted += moteur_RunWorkerCompleted;
             moteur.ProgressChanged += moteur_ProgressChanged;
             moteur.RunWorkerAsync(modele);
-        }
-
-        private void Annuler_Click(object sender, RoutedEventArgs e)
-        {
-            if (moteur != null)
-                moteur.CancelAsync();
-            Lancer.IsEnabled = true;
-            Annuler.IsEnabled = false;
         }
 
         void moteur_DoWork(object sender, DoWorkEventArgs e)
@@ -117,6 +83,14 @@ namespace AssistantRepartitionClassesCollege.Controls
             }
 
             e.Result = Tuple.Create(Meilleur, fitness);
+        }
+
+        private void Annuler_Click(object sender, RoutedEventArgs e)
+        {
+            if (moteur != null)
+                moteur.CancelAsync();
+            Lancer.IsEnabled = true;
+            Annuler.IsEnabled = false;
         }
 
         void moteur_ProgressChanged(object sender, ProgressChangedEventArgs e)
