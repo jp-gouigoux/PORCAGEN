@@ -24,7 +24,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Slider Value="{Binding MaxHeuresSup, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" Minimum="1" Maximum="5" TickFrequency="0.5" Width="100" SmallChange="0.5" TickPlacement="BottomRight" />
+                                <Slider Value="{Binding MaxHeuresSup, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" Minimum="0" Maximum="5" TickFrequency="0.5" Width="100" SmallChange="0.5" TickPlacement="BottomRight" />
                                 <Label Content="{Binding MaxHeuresSup}" />
                                 <Label Content="heures"/>
                             </StackPanel>

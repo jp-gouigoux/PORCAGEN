@@ -29,6 +29,7 @@ namespace AssistantRepartitionClassesCollege
         public Controls.PreferencesNiveaux ControlePreferencesNiveaux = null;
         public Controls.Criteres ControleCriteres = null;
         public Controls.Simuler ControleSimuler = null;
+        public Controls.Options ControleOptions = null;
 
         ModeleProjet modele = null;
 
@@ -36,6 +37,7 @@ namespace AssistantRepartitionClassesCollege
 
         public MainWindow()
         {
+            // Initialisation des contrôles graphiques du programme
             InitializeComponent();
             Contenu.Children.Add(ControleBienvenu = new Controls.Welcome());
             Contenu.Children.Add(ControleProjet = new Controls.Projet());
@@ -45,13 +47,16 @@ namespace AssistantRepartitionClassesCollege
             Contenu.Children.Add(ControlePreferencesNiveaux = new Controls.PreferencesNiveaux());
             Contenu.Children.Add(ControleCriteres = new Controls.Criteres());
             Contenu.Children.Add(ControleSimuler = new Controls.Simuler());
+            Contenu.Children.Add(ControleOptions = new Controls.Options());
+
+            // Lorsqu'on démarre le programme, le contrôle visible est celui qui affiche le message de bienvenue
             CacherControlesEnfants(Contenu);
             ControleBienvenu.Visibility = Visibility.Visible;
 
+            // Sur la machine de développement, chargement automatique d'un projet pour tests
             if (Environment.MachineName == "ANTARES")
             {
                 modele = new ModeleProjet();
-                // 91 heures de cours + 2,5 heures de soutien, soit 93,5 heures à pourvoir
                 modele.Classes.Add(new ModeleProjet.Classe() { Nom = "6A", Niveau = Niveau.Sixième, Duree = 5, DureeSoutien = 0.5, AutoriserDecoupe = true });
                 modele.Classes.Add(new ModeleProjet.Classe() { Nom = "6B", Niveau = Niveau.Sixième, Duree = 5, DureeSoutien = 0.5, AutoriserDecoupe = true });
                 modele.Classes.Add(new ModeleProjet.Classe() { Nom = "6C", Niveau = Niveau.Sixième, Duree = 5, DureeSoutien = 0.5, AutoriserDecoupe = true });
@@ -73,14 +78,13 @@ namespace AssistantRepartitionClassesCollege
                 modele.Classes.Add(new ModeleProjet.Classe() { Nom = "3B", Niveau = Niveau.Troisième, Duree = 4.5, AutoriserDecoupe = false });
                 modele.Classes.Add(new ModeleProjet.Classe() { Nom = "3C", Niveau = Niveau.Troisième, Duree = 4.5, AutoriserDecoupe = false });
                 modele.Classes.Add(new ModeleProjet.Classe() { Nom = "3D", Niveau = Niveau.Troisième, Duree = 4.5, AutoriserDecoupe = false });
-                // 92 heures de services hors heures supplémentaires, donc il faudra trois fois une demi-heure
-                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Elizabeth", Service = 10, MaxHeuresSup = 2 });
-                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Anne", Service = 18, MaxHeuresSup = 2 });
-                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Guénaëlle", Service = 9, MaxHeuresSup = 2 });
-                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Julie", Service = 15, MaxHeuresSup = 2 });
-                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "BMP18", Service = 18, MaxHeuresSup = 2 });
-                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "BMP8", Service = 8, MaxHeuresSup = 2 });
-                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Morgane", Service = 14, MaxHeuresSup = 2 });
+                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Elizabeth", Service = 10, MaxHeuresSup = 1.5 });
+                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Anne", Service = 18, MaxHeuresSup = 1.5 });
+                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Guénaëlle", Service = 9, MaxHeuresSup = 0 });
+                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Julie", Service = 15, MaxHeuresSup = 0 });
+                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "BMP18", Service = 18, MaxHeuresSup = 1.5 });
+                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "BMP8", Service = 8, MaxHeuresSup = 0 });
+                modele.Profs.Add(new ModeleProjet.Prof() { Nom = "Morgane", Service = 14, MaxHeuresSup = 0 });
                 modele.Preaffectations.Add(new ModeleProjet.Preaffectation() { Prof = "Morgane", Classe = "6A" });
                 modele.Preaffectations.Add(new ModeleProjet.Preaffectation() { Prof = "Guénaëlle", Classe = "3A" });
                 modele.PreferencesNiveaux.Add(new ModeleProjet.PreferenceNiveau() { Prof = "Morgane", Mode = Preference.NePeutPasAvoir, Niveau = Niveau.Troisième });
@@ -102,6 +106,7 @@ namespace AssistantRepartitionClassesCollege
             ControlePreferencesNiveaux.DataContext = modele;
             ControleCriteres.DataContext = modele;
             ControleSimuler.DataContext = modele;
+            ControleOptions.DataContext = modele;
         }
 
         private void NewCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -118,7 +123,7 @@ namespace AssistantRepartitionClassesCollege
             }
 
             modele = new ModeleProjet();
-
+            modele.isDirty = true;
             BindControls();
 
             CacherControlesEnfants(Contenu);
@@ -152,6 +157,7 @@ namespace AssistantRepartitionClassesCollege
             {
                 NomFichierModele = dialog.FileName;
                 modele = ModeleProjet.Load(NomFichierModele);
+                modele.isDirty = false;
                 BindControls();
 
                 CacherControlesEnfants(Contenu);
@@ -169,6 +175,7 @@ namespace AssistantRepartitionClassesCollege
             if (NomFichierModele == null) DisplaySaveAsDialog();
             if (NomFichierModele == null) return;
             modele.Save(NomFichierModele);
+            modele.isDirty = false;
             Statut.Text = "Fichier enregistré";
             e.Handled = true;
         }
@@ -183,6 +190,7 @@ namespace AssistantRepartitionClassesCollege
             DisplaySaveAsDialog();
             if (NomFichierModele == null) return;
             modele.Save(NomFichierModele);
+            modele.isDirty = false;
             Statut.Text = "Fichier enregistré";
             e.Handled = true;
         }
@@ -215,6 +223,17 @@ namespace AssistantRepartitionClassesCollege
 
             CacherControlesEnfants(Contenu);
             ControleBienvenu.Visibility = Visibility.Visible;
+        }
+
+        private void OptionsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = modele != null;
+        }
+
+        private void OptionsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            CacherControlesEnfants(Contenu);
+            ControleOptions.Visibility = Visibility.Visible;
         }
 
         private void ExitCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -388,6 +407,12 @@ namespace AssistantRepartitionClassesCollege
             "Simuler",
             typeof(CustomCommands),
             new InputGestureCollection() { new KeyGesture(Key.S, ModifierKeys.Alt) });
+
+        public static readonly RoutedUICommand Options = new RoutedUICommand(
+            "Options",
+            "Options",
+            typeof(CustomCommands),
+            new InputGestureCollection() { new KeyGesture(Key.O, ModifierKeys.Alt) });
 
         public static readonly RoutedUICommand Exit = new RoutedUICommand(
             "Exit",

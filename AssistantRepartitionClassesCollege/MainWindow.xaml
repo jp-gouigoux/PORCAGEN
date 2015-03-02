@@ -9,6 +9,7 @@
         <CommandBinding Command="Save" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="SaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
         <CommandBinding Command="Close" CanExecute="CloseCommand_CanExecute" Executed="CloseCommand_Executed" />
+        <CommandBinding Command="self:CustomCommands.Options" CanExecute="OptionsCommand_CanExecute" Executed="OptionsCommand_Executed" />
         <CommandBinding Command="self:CustomCommands.Exit" CanExecute="ExitCommand_CanExecute" Executed="ExitCommand_Executed" />
         <CommandBinding Command="self:CustomCommands.Classes" CanExecute="ClassesCommand_CanExecute" Executed="ClassesCommand_Executed" />
         <CommandBinding Command="self:CustomCommands.Profs" CanExecute="ProfsCommand_CanExecute" Executed="ProfsCommand_Executed" />
@@ -28,7 +29,7 @@
                     <MenuItem Command="SaveAs" Header="Enregistrer _sous..."/>
                     <MenuItem Command="Close" Header="_Fermer"/>
                     <Separator/>
-                    <MenuItem Header="_Options"/>
+                    <MenuItem Command="self:CustomCommands.Options" Header="_Options"/>
                     <Separator/>
                     <MenuItem Command="self:CustomCommands.Exit" Header="_Quitter"/>
                 </MenuItem>

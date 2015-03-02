@@ -103,7 +103,7 @@ namespace AssistantRepartitionClassesCollege
         }
 
         [XmlIgnore]
-        public bool isDirty = true;
+        public bool isDirty { get; set; }
 
         public List<Classe> Classes { get; set; }
         public List<Prof> Profs { get; set; }
@@ -129,7 +129,6 @@ namespace AssistantRepartitionClassesCollege
         private double HeuresCoursTotal { get { return HeuresClasses + HeuresSoutien; } }
         private double HeuresProfsMaxVoulu { get { return HeuresServices + HeuresSupTotalMax; } }
         private double HeuresProfsMaxTheorique { get { return HeuresServices + 5 * Profs.Count; } } // Variabiliser le 5 si on le fait un jour dans le contrôle graphique
-
 
         public ModeleProjet()
         {
