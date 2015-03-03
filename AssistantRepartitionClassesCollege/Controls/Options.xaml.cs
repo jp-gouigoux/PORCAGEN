@@ -25,16 +25,17 @@ namespace AssistantRepartitionClassesCollege.Controls
             InitializeComponent();
         }
 
+        // Penser à supprimer ce code quand on aura implémenté le isDirty de manière complète
         private void TaillePopulation_TextChanged(object sender, TextChangedEventArgs e)
         {
-            ModeleProjet modele = DataContext as ModeleProjet;
-            if (modele != null) modele.isDirty = true;
+            //ModeleProjet modele = DataContext as ModeleProjet;
+            //if (modele != null) modele.isDirty = true;
         }
 
         private void NombreIterations_TextChanged(object sender, TextChangedEventArgs e)
         {
-            ModeleProjet modele = DataContext as ModeleProjet;
-            if (modele != null) modele.isDirty = true;
+            //ModeleProjet modele = DataContext as ModeleProjet;
+            //if (modele != null) modele.isDirty = true;
         }
     }
 }

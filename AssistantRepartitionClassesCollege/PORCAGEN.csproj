@@ -102,6 +102,11 @@
     <Compile Include="Controls\Projet.xaml.cs">
       <DependentUpon>Projet.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Model\Classe.cs" />
+    <Compile Include="Model\CriteresCalcul.cs" />
+    <Compile Include="Model\Preaffectation.cs" />
+    <Compile Include="Model\PreferenceNiveau.cs" />
+    <Compile Include="Model\Prof.cs" />
     <Compile Include="Simulation\FitnessRepartitionClasses.cs" />
     <Compile Include="Simulation\RouletteEliteSelection.cs" />
     <Page Include="Controls\Classes.xaml">
@@ -175,7 +180,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ModeleProjet.cs" />
+    <Compile Include="Model\ModeleProjet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

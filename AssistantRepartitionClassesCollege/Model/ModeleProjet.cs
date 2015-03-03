@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -24,94 +28,34 @@ namespace AssistantRepartitionClassesCollege
         NePeutPasAvoir
     }
 
-    public class ModeleProjet
+    public class ModeleProjet : INotifyPropertyChanged
     {
-        public class Classe
-        {
-            [XmlAttribute]
-            public string Nom { get; set; }
-            [XmlAttribute]
-            public Niveau Niveau { get; set; }
-            [XmlAttribute]
-            public double Duree { get; set; }
-            [XmlAttribute]
-            public double DureeSoutien { get; set; }
-            [XmlAttribute]
-            public bool AutoriserDecoupe { get; set; }
+        public event PropertyChangedEventHandler PropertyChanged;
 
-            public override string ToString()
+        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+        {
+            if (PropertyChanged != null)
             {
-                return string.Concat(Nom, " : ", Duree.ToString("F1"), "h", DureeSoutien > 0 ? ("+" + DureeSoutien.ToString("F1") + "h") : string.Empty);
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+                isDirty = true;
             }
-        }
-
-        public class Prof
-        {
-            [XmlAttribute]
-            public string Nom { get; set; }
-            [XmlAttribute]
-            public double Service { get; set; }
-            [XmlAttribute]
-            public double MaxHeuresSup { get; set; }
-
-            public override string ToString()
-            {
-                return string.Concat(Nom, " : ", Service.ToString("F1"), "h+", MaxHeuresSup.ToString("F1") + "h");
-            }
-        }
-
-        public class Preaffectation
-        {
-            [XmlAttribute]
-            public string Classe { get; set; }
-            [XmlAttribute]
-            public string Prof { get; set; }
-
-            public override string ToString()
-            {
-                return string.Concat(Classe, " => ", Prof);
-            }
-        }
-
-        public class PreferenceNiveau
-        {
-            [XmlAttribute]
-            public string Prof { get; set; }
-            [XmlAttribute]
-            public Preference Mode { get; set; }
-            [XmlAttribute]
-            public Niveau Niveau { get; set; }
-
-            public override string ToString()
-            {
-                return string.Concat(Prof, " ", Mode, " ", Niveau);
-            }
-        }
-
-        public class CriteresCalcul
-        {
-            [XmlAttribute]
-            public int CritereNonDecoupageClasses { get; set; }
-            [XmlAttribute]
-            public int CritereDecoupageSurHeurePleine { get; set; }
-            [XmlAttribute]
-            public int CritereLimiterNiveauxParProf { get; set; }
-            [XmlAttribute]
-            public int CriterePrivilegierMemeProfCoursEtSoutien { get; set; }
-            [XmlAttribute]
-            public int CriterePriseEnComptePreferencesNiveaux { get; set; }
         }
 
         [XmlIgnore]
         public bool isDirty { get; set; }
 
-        public List<Classe> Classes { get; set; }
+        public ObservableCollection<Classe> Classes { get; set; }
         public List<Prof> Profs { get; set; }
         public List<Preaffectation> Preaffectations { get; set; }
         public List<PreferenceNiveau> PreferencesNiveaux { get; set; }
         public CriteresCalcul Criteres { get; set; }
 
-        public int TaillePopulation { get; set; }
+        private int _TaillePopulation;
+        public int TaillePopulation
+        {
+            get { return _TaillePopulation; }
+            set { if (value != _TaillePopulation) { _TaillePopulation = value; NotifyPropertyChanged(); } }
+        }
         public int NombreIterations { get; set; }
 
         private static XmlSerializer _serialiseur = null;
@@ -132,7 +76,9 @@ namespace AssistantRepartitionClassesCollege
 
         public ModeleProjet()
         {
-            Classes = new List<Classe>();
+            Classes = new ObservableCollection<Classe>();
+            Classes.CollectionChanged += Classes_CollectionChanged;
+            
             Profs = new List<Prof>();
             Preaffectations = new List<Preaffectation>();
             PreferencesNiveaux = new List<PreferenceNiveau>();
@@ -140,6 +86,22 @@ namespace AssistantRepartitionClassesCollege
 
             TaillePopulation = 1000;
             NombreIterations = 1000;
+        }
+
+        void Classes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            isDirty = true;
+            if (e.Action == NotifyCollectionChangedAction.Remove)
+                foreach (Classe c in e.OldItems)
+                    c.PropertyChanged -= c_PropertyChanged;
+            else if (e.Action == NotifyCollectionChangedAction.Add)
+                foreach (Classe c in e.NewItems)
+                    c.PropertyChanged += c_PropertyChanged;
+        }
+
+        void c_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            isDirty = true;
         }
 
         internal void Save(string NomFichierModele)
